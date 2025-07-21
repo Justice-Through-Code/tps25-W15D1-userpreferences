@@ -177,39 +177,44 @@ class PreferenceManager:
     
     def set(self, category: str, key: str, value: Any) -> bool:
         """Set a preference value with validation."""
-        # Validate the preference exists in schema
+        # Validate the preference exists in schema and if not, raises an error
         if category not in self.schema or key not in self.schema[category]:
             raise ValueError(f"Unknown preference: {category}.{key}")
         
+        # Gets the preference specification from the schema
         spec = self.schema[category][key]
         
-        # Validate the value
+        # Validate the value - calls a validation to make sure the value matches the spec
         if not self._validate_value(value, spec):
             raise ValueError(f"Invalid value for {category}.{key}: {value}")
         
         # Store old value for change notification
         old_value = self.preferences.get(category, {}).get(key)
         
-        # Set the new value
+        # Updates the internal preferences dictionary with the new value.
         if category not in self.preferences:
             self.preferences[category] = {}
         self.preferences[category][key] = value
         
-        # Save to storage
+        # Save to storage - writes the updated preferences to the json file
         self._save_preferences()
         
-        # Notify listeners
+        # If the value actually changed, call any registered change listeners (functions that react to updates, like re-theming the app).
         if old_value != value:
             self._notify_change(category, key, old_value, value)
         
+        # Indicates the value was suiccessfully set
         return True
     
     def _validate_value(self, value: Any, spec: Dict) -> bool:
         """Validate a value against its specification."""
         pref_type = spec['type']
         
+        # Ensures it accepts only True/False values
         if pref_type == 'boolean':
             return isinstance(value, bool)
+        
+        # Ensures the value is an integer and within the min/max values set
         elif pref_type == 'integer':
             if not isinstance(value, int):
                 return False
@@ -218,8 +223,12 @@ class PreferenceManager:
             if 'max' in spec and value > spec['max']:
                 return False
             return True
+        
+        # Checks that the value is a string
         elif pref_type == 'string':
             return isinstance(value, str)
+        
+        # Ensures the value is one of the allowed options (such as light, dark, or auto for theme setting)
         elif pref_type == 'choice':
             return value in spec['options']
         
@@ -233,6 +242,10 @@ class PreferenceManager:
         except IOError as e:
             print(f"Error saving preferences: {e}")
     
+
+
+    # These 3 functions allow our application to respond dynamically to preference changes
+    # Allows the app to react in real time to user changes such as updating the theme or refreshing data without restarting the application
     def add_change_listener(self, callback: Callable):
         """Add a listener for preference changes."""
         self._change_listeners.append(callback)
