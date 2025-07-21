@@ -34,3 +34,12 @@ Key Terms
     Preference Validation: Ensuring preference values meet specified criteria
     Hot Reload: Applying preference changes without restarting the application
     Configuration Singleton: A design pattern ensuring only one preference manager exists
+
+
+
+Components of a Preference System:
+    Data Model: How preferences are structured and stored
+    Storage Layer: Where and how preferences are persisted
+    Access Layer: How the application reads and writes preferences
+    UI Layer: How users interact with preferences
+    Application Layer: How preferences affect application behavior
